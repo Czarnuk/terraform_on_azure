@@ -28,14 +28,24 @@ resource "azurerm_public_ip" "appip" {
   depends_on = [ azurerm_resource_group.appgrp ]
 }
 
+data "azurerm_key_vault" "keyvault93012205093" {
+  name                = "keyvault93012205093"
+  resource_group_name = azurerm_resource_group.appgrp.name
+}
+
+data "azurerm_key_vault_secret" "vmpassword" {
+  name         = "vmpassword"
+  key_vault_id = data.azurerm_key_vault.keyvault93012205093.id
+}
+
 resource "azurerm_windows_virtual_machine" "appvm" {
   count = var.number_of_machines
   name                = "appvm${count.index}"
   resource_group_name = azurerm_resource_group.appgrp.name
   location            = azurerm_resource_group.appgrp.location
-  size                = "Standard_D2S_v3"
+  size                = "Standard_D2s_v3"
   admin_username      = "adminuser"
-  admin_password      = azurerm_key_vault_secret.vmpassword.value
+  admin_password      = data.azurerm_key_vault_secret.vmpassword.value
   zone = (count.index + 1)
   network_interface_ids = [
     azurerm_network_interface.appinterface[count.index].id,
